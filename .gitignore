@@ -1,0 +1,5 @@
+.DS_Store
+node_modules/
+reports/*.html
+reports/*.json
+!reports/.gitkeep

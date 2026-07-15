@@ -1,0 +1,22 @@
+{
+  "name": "tzero-perf-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "k6 load and stress performance tests for the tZERO mobile API (preprod/staging)",
+  "scripts": {
+    "signup:load": "k6 run -e TEST_TYPE=load scenarios/01-signup.js",
+    "signup:stress": "k6 run -e TEST_TYPE=stress scenarios/01-signup.js",
+    "signin:load": "k6 run -e TEST_TYPE=load scenarios/01b-signin.js",
+    "signin:stress": "k6 run -e TEST_TYPE=stress scenarios/01b-signin.js",
+    "onboarding:individual:load": "k6 run -e TEST_TYPE=load scenarios/02-onboarding-individual.js",
+    "onboarding:individual:stress": "k6 run -e TEST_TYPE=stress scenarios/02-onboarding-individual.js",
+    "onboarding:entity:load": "k6 run -e TEST_TYPE=load scenarios/02-onboarding-entity.js",
+    "onboarding:entity:stress": "k6 run -e TEST_TYPE=stress scenarios/02-onboarding-entity.js",
+    "invest:load": "k6 run -e TEST_TYPE=load scenarios/03-invest-wire.js",
+    "invest:stress": "k6 run -e TEST_TYPE=stress scenarios/03-invest-wire.js",
+    "trade:load": "k6 run -e TEST_TYPE=load scenarios/04-trade-wallet.js",
+    "trade:stress": "k6 run -e TEST_TYPE=stress scenarios/04-trade-wallet.js",
+    "history:load": "k6 run -e TEST_TYPE=load scenarios/05-order-history.js",
+    "history:stress": "k6 run -e TEST_TYPE=stress scenarios/05-order-history.js"
+  }
+}
