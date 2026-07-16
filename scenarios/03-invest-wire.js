@@ -9,9 +9,9 @@
 //   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/03-invest-wire.js
 //
 // Requires a pool of already onboarded, investment-eligible accounts in
-// preprod (see TEST_USER_POOL_* in config/environment.js) — this flow signs in
+// staging (see TEST_USER_POOL_* in config/environment.js) — this flow signs in
 // as an existing user rather than registering a new one. This scenario
-// submits real investments/wire submissions in preprod on every run —
+// submits real investments/wire submissions in staging on every run —
 // coordinate with whoever owns test-data cleanup before running at full
 // 500-VU scale.
 

@@ -8,7 +8,7 @@
 //
 // Read-only scenario (no order placement/cancellation here — see
 // scenarios/04-trade-wallet.js for that). Requires a pool of already
-// onboarded accounts with existing order history in preprod (see
+// onboarded accounts with existing order history in staging (see
 // TEST_USER_POOL_* in config/environment.js) for the list/detail calls to
 // return meaningful data.
 

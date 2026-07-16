@@ -8,9 +8,9 @@
 //   k6 run -e TEST_TYPE=load   -e BASE_URL=https://... scenarios/04-trade-wallet.js
 //   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/04-trade-wallet.js
 //
-// Requires a pool of already onboarded, trading-eligible accounts in preprod
+// Requires a pool of already onboarded, trading-eligible accounts in staging
 // (see TEST_USER_POOL_* in config/environment.js). This scenario places a real
-// order and immediately cancels it in preprod on every run — coordinate with
+// order and immediately cancels it in staging on every run — coordinate with
 // whoever owns the order book / test-data cleanup before running at full
 // 500-VU scale.
 

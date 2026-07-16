@@ -12,7 +12,7 @@
 //   k6 run -e TEST_TYPE=load   -e BASE_URL=https://... scenarios/01b-signin.js
 //   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/01b-signin.js
 //
-// Requires a pool of already-registered accounts in preprod (see
+// Requires a pool of already-registered accounts in staging (see
 // TEST_USER_POOL_* in config/environment.js) — 500 VUs signing into one
 // shared account isn't realistic and will collide on sessions/rate limits.
 // Seed the pool first, e.g. by running scenarios/01-signup.js with a matching
@@ -47,7 +47,7 @@ export default function () {
   const res = http.post(
     url(`/auth/2fa/verify/${TEST_2FA_CODE}`),
     null,
-    // TODO: real SMS codes can't be scripted — confirm a fixed test/bypass OTP for preprod.
+    // TODO: real SMS codes can't be scripted — confirm a fixed test/bypass OTP for staging.
     { headers: jsonHeaders(token), tags: { name: 'Verify2FACode' } }
   );
   check(res, { 'verify 2fa ok': (r) => r.status === 200 });

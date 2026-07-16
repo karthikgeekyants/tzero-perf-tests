@@ -2,8 +2,9 @@
   "name": "tzero-perf-tests",
   "version": "1.0.0",
   "private": true,
-  "description": "k6 load and stress performance tests for the tZERO mobile API (preprod/staging)",
+  "description": "k6 load and stress performance tests for the tZERO mobile API (staging)",
   "scripts": {
+    "seed:pool": "k6 run scenarios/00-seed-user-pool.js",
     "signup:load": "k6 run -e TEST_TYPE=load scenarios/01-signup.js",
     "signup:stress": "k6 run -e TEST_TYPE=stress scenarios/01-signup.js",
     "signin:load": "k6 run -e TEST_TYPE=load scenarios/01b-signin.js",

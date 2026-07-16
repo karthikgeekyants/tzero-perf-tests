@@ -9,21 +9,21 @@
 //   6. Navigate to portfolio screen — out of scope here, see scenarios/03-invest-wire.js
 //
 // Run:
-//   k6 run -e TEST_TYPE=load   -e BASE_URL=https://... scenarios/01-signin-signup.js
-//   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/01-signin-signup.js
+//   k6 run -e TEST_TYPE=load   -e BASE_URL=https://... scenarios/01-signup.js
+//   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/01-signup.js
 //
 // Each iteration registers a brand-new user (email + phone must be unique), so
-// this scenario creates real accounts in preprod on every run — coordinate
+// this scenario creates real accounts in staging on every run — coordinate
 // with whoever owns test-data cleanup before running at full 500-VU scale.
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { url, jsonHeaders } from '../lib/http.js';
+import { url } from '../lib/http.js';
 import { buildOptions, thresholdMs } from '../lib/options.js';
-import { signUp, signIn } from '../lib/auth.js';
+import { signUp, signIn, verifyPhoneOtp } from '../lib/auth.js';
 import { generateTestUser } from '../lib/users.js';
 import { buildSummary } from '../lib/report.js';
-import { TEST_2FA_CODE, SLEEP_SECONDS } from '../config/environment.js';
+import { SLEEP_SECONDS } from '../config/environment.js';
 
 export const options = buildOptions({
   'http_req_duration{name:SignUp}': [thresholdMs('SIGNUP_P95_THRESHOLD_MS', 1000)],
@@ -54,23 +54,8 @@ export default function () {
   sleep(SLEEP_SECONDS);
   if (!token) return;
 
-  // 4. Enter phone number, tap "Send code"
-  res = http.post(
-    url('/auth/2fa/sms/code'),
-    JSON.stringify({ phone: user.phone }),
-    { headers: jsonHeaders(token), tags: { name: 'Request2FACode' } }
-  );
-  check(res, { 'request 2fa code ok': (r) => r.status === 200 });
-  sleep(SLEEP_SECONDS);
-
-  // 5. Enter the received code, verify
-  res = http.post(
-    url(`/auth/2fa/verify/${TEST_2FA_CODE}`),
-    null,
-    // TODO: real SMS codes can't be scripted — confirm a fixed test/bypass OTP for preprod.
-    { headers: jsonHeaders(token), tags: { name: 'Verify2FACode' } }
-  );
-  check(res, { 'verify 2fa ok': (r) => r.status === 200 });
+  // 4-5. Enter phone number, tap "Send code", then enter the received code and verify
+  verifyPhoneOtp(token, user.phone);
   sleep(SLEEP_SECONDS);
 
   // 6. Navigate to portfolio screen — out of scope here.
