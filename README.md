@@ -8,6 +8,15 @@ clients' shared backend at once.
 
 - [k6](https://k6.io/) installed locally (`brew install k6` on macOS).
 - A staging base URL to test against (see [Configuration](#configuration)).
+- **`SIGN_UP_PASSWORD` set** — required by nearly every scenario (directly, or
+  via a pool password that defaults to it), and deliberately has no
+  committed default since it grants access to real accounts on staging.
+  Set it once per shell session before running anything below:
+  ```bash
+  export SIGN_UP_PASSWORD='...'
+  ```
+  Every scenario throws immediately at startup if it's missing, rather than
+  running with a silently-wrong value.
 
 ## Project structure
 
@@ -165,7 +174,7 @@ test data.
 | `TEST_TYPE` | `load` | `load` or `stress` |
 | `MAX_VUS` | `500` | Peak virtual users for both profiles |
 | `SLEEP_SECONDS` | `1` | Pause between steps within an iteration |
-| `SIGN_UP_PASSWORD` | `PerfTest@12345` | Password used for newly-registered test users |
+| `SIGN_UP_PASSWORD` | **required, no default** | Password used for newly-registered test users. Grants access to real (if synthetic) staging accounts, so it's deliberately not committed to source — every script that touches it throws immediately if it's unset. Set it once per shell session: `export SIGN_UP_PASSWORD='...'` |
 | `TEST_USER_EMAIL_DOMAIN` | `tzero-perf-test.com` | Domain used for every generated test-user email |
 | `SESSION_REFRESH_INTERVAL_MS` | `150000` | How often long flows force a session refresh (access token lives ~180s) |
 | `EMAIL_VERIFICATION_CODE` | `000000` | Fallback only — confirmed **not** a real bypass code (see [Known gaps](#known-gaps--open-items)) |
@@ -213,6 +222,8 @@ test data.
 | `ONBOARDING_SIGN_RETRY_DELAY_SECONDS` | `20` | Delay between `sign` retries |
 | `ONBOARDING_DOCUMENT_UPLOAD_MAX_ATTEMPTS` | `8` | Retry count for entity document upload (503/500) |
 | `ONBOARDING_DOCUMENT_UPLOAD_RETRY_DELAY_SECONDS` | `8` | Delay between document-upload retries |
+| `ONBOARDING_SUBMIT_MAX_ATTEMPTS` | `8` | Retry count for entity `submit` (503/500 are transient) |
+| `ONBOARDING_SUBMIT_RETRY_DELAY_SECONDS` | `8` | Delay between `submit` retries |
 
 **Onboarding — Entity/LLC only**
 

@@ -24,6 +24,16 @@ if (!logFile) {
   process.exit(1);
 }
 
+// Every generated user shares this same password (see config/environment.js)
+// -- the flow deliberately doesn't log it (keeps a real secret out of
+// stdout), so it's filled back in here instead of being captured per-account.
+// No default on purpose -- must match whatever the run itself used.
+const SIGN_UP_PASSWORD = process.env.SIGN_UP_PASSWORD;
+if (!SIGN_UP_PASSWORD) {
+  console.error('SIGN_UP_PASSWORD env var is required -- set it to the same value the run itself used.');
+  process.exit(1);
+}
+
 const MARKERS = [
   { marker: 'ONBOARDING_INDIVIDUAL_ACCOUNT_CREDENTIAL:', outFile: 'onboarding-individual-run-pool.json' },
   { marker: 'ONBOARDING_ENTITY_ACCOUNT_CREDENTIAL:', outFile: 'onboarding-entity-run-pool.json' },
@@ -44,7 +54,7 @@ for (const { marker, outFile } of MARKERS) {
     const unescaped = endMatch[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
     try {
       const entry = JSON.parse(unescaped);
-      if (entry.email && entry.totpSecret) entries.push(entry);
+      if (entry.email && entry.totpSecret) entries.push({ ...entry, password: SIGN_UP_PASSWORD });
     } catch {
       continue;
     }

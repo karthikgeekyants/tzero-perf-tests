@@ -9,7 +9,17 @@ export const BASE_URL = __ENV.BASE_URL || 'https://gateway-web-markets-staging.t
 // is the actual staging gateway, not a guess. (The TEST host used earlier
 // for sanity-checking the script was gateway-web-markets-test.tzero.com.)
 
-export const SIGN_UP_PASSWORD = __ENV.SIGN_UP_PASSWORD || 'PerfTest@12345';
+// Required, no fallback -- this password grants access to real (if
+// synthetic) accounts on staging, so it must not be committed to source.
+// Every scenario needs it (directly, or via the pool passwords below that
+// default to it), so set it once per shell session:
+//   export SIGN_UP_PASSWORD='...'
+export const SIGN_UP_PASSWORD = __ENV.SIGN_UP_PASSWORD;
+if (!SIGN_UP_PASSWORD) {
+  throw new Error(
+    'SIGN_UP_PASSWORD is required -- set it with `export SIGN_UP_PASSWORD=...` or `-e SIGN_UP_PASSWORD=...` on the k6 run command. No default is provided on purpose (see README).'
+  );
+}
 
 // Shared by every generated test-user email (signup, pool, onboarding
 // associated people) so there's one place to change it -- e.g. to a real,
@@ -120,6 +130,12 @@ export const ONBOARDING_DOCUMENT_UPLOAD_MAX_ATTEMPTS = Number(__ENV.ONBOARDING_D
 export const ONBOARDING_DOCUMENT_UPLOAD_RETRY_DELAY_SECONDS = Number(
   __ENV.ONBOARDING_DOCUMENT_UPLOAD_RETRY_DELAY_SECONDS || 8
 );
+// Entity submit retries on 503/500 too (transient backend flakiness, same
+// symptom as document upload) -- a dedicated constant, not reused from the
+// document-upload one above, since the two steps are independent and tuning
+// one shouldn't silently retune the other.
+export const ONBOARDING_SUBMIT_MAX_ATTEMPTS = Number(__ENV.ONBOARDING_SUBMIT_MAX_ATTEMPTS || 8);
+export const ONBOARDING_SUBMIT_RETRY_DELAY_SECONDS = Number(__ENV.ONBOARDING_SUBMIT_RETRY_DELAY_SECONDS || 8);
 
 // Onboarding (9.2) — business entity types (LLC/CORPORATION/PARTNERSHIP/
 // TRUST). Confirmed 2026-08-20: "ENTITY" is not a real accountType at all —

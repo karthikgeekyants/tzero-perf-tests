@@ -81,12 +81,15 @@ export default function () {
 
   // Parsed out of the run's captured output by
   // scripts/build-signup-run-pool.js -- keep this prefix and single-line
-  // JSON shape in sync with that script. No extra request needed -- email/
-  // password come from generateTestUser(), totpSecret is already fetched as
-  // part of the flow above. This account isn't onboarded, so it has no
-  // legacy accountId yet -- Sign In only needs email/password/totpSecret to
-  // reuse it, which is this pool's whole purpose.
-  console.log(
-    `SIGNUP_ACCOUNT_CREDENTIAL:${JSON.stringify({ email: user.email, password: user.password, totpSecret })}`
-  );
+  // JSON shape in sync with that script. No extra request needed -- email
+  // comes from generateTestUser(), totpSecret is already fetched as part of
+  // the flow above. This account isn't onboarded, so it has no legacy
+  // accountId yet -- Sign In only needs email/password/totpSecret to reuse
+  // it, which is this pool's whole purpose. password is deliberately NOT
+  // logged here -- every generated user shares the same SIGN_UP_PASSWORD,
+  // so there's nothing account-specific to capture, and it keeps a real
+  // secret (even a shared one) out of stdout, which some environments
+  // aggregate into centralized logging. build-signup-run-pool.js fills the
+  // password back in from that same config value when it builds the pool.
+  console.log(`SIGNUP_ACCOUNT_CREDENTIAL:${JSON.stringify({ email: user.email, totpSecret })}`);
 }
