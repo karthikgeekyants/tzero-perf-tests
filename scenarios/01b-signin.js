@@ -1,57 +1,73 @@
 // Scenario 9.1 — Sign In
 //
-// Models the actual Sign In screen flow:
-//   1. Enter email + password -> submit
-//   2. Enter mobile OTP, tap verify button -> verify 2FA code
-//   3. Navigate to portfolio screen — out of scope here, see scenarios/03-invest-wire.js
-//
-// Distinct from scenarios/01-signup.js (new registration) since it's a
-// different journey and, in real traffic, a far higher-volume one.
+// Requires the pool seeded first — see README's "Test user pool" section
+// (scenarios/00-seed-user-pool.js, then scripts/build-pool-secrets.js to
+// capture each pooled account's TOTP secret into config/pool-secrets.json).
 //
 // Run:
 //   k6 run -e TEST_TYPE=load   -e BASE_URL=https://... scenarios/01b-signin.js
 //   k6 run -e TEST_TYPE=stress -e BASE_URL=https://... scenarios/01b-signin.js
-//
-// Requires a pool of already-registered accounts in staging (see
-// TEST_USER_POOL_* in config/environment.js) — 500 VUs signing into one
-// shared account isn't realistic and will collide on sessions/rate limits.
-// Seed the pool first, e.g. by running scenarios/01-signup.js with a matching
-// email pattern/password ahead of time.
 
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { url, jsonHeaders } from '../lib/http.js';
+import { sleep } from 'k6';
 import { buildOptions, thresholdMs } from '../lib/options.js';
-import { signIn } from '../lib/auth.js';
-import { pickPooledUser } from '../lib/users.js';
+import { signIn, verifyTotp, getCurrentUser, resolveAccountIds, logout } from '../lib/auth.js';
+import { pickPooledUser, pickCapturedSignupPoolUser } from '../lib/users.js';
 import { buildSummary } from '../lib/report.js';
-import { TEST_2FA_CODE, SLEEP_SECONDS } from '../config/environment.js';
+import { SLEEP_SECONDS, SIGNIN_SOURCE } from '../config/environment.js';
 
 export const options = buildOptions({
+  // Every tagged step gets a threshold -- k6 only keeps a separate per-step
+  // breakdown metric (shown in the report's "Response time by step" table)
+  // for tags referenced by a threshold, so without this only SignIn would
+  // show its own numbers even though all 5 calls in this flow are tagged.
   'http_req_duration{name:SignIn}': [thresholdMs('SIGNIN_P95_THRESHOLD_MS', 800)],
+  'http_req_duration{name:Verify2FACode}': [thresholdMs('VERIFY_2FA_CODE_P95_THRESHOLD_MS', 800)],
+  'http_req_duration{name:GetCurrentUser}': [thresholdMs('GET_CURRENT_USER_P95_THRESHOLD_MS', 500)],
+  'http_req_duration{name:ResolveAccountIds}': [thresholdMs('RESOLVE_ACCOUNT_IDS_P95_THRESHOLD_MS', 500)],
+  'http_req_duration{name:Logout}': [thresholdMs('LOGOUT_P95_THRESHOLD_MS', 500)],
 });
 
+const API_LIST = [
+  { step: '1. Sign in', method: 'POST', endpoint: '/auth/login', description: 'Authenticates the returning user' },
+  { step: '2. Verify two-factor code', method: 'POST', endpoint: '/auth/2fa/verify/{code}', description: 'Confirms 2FA for this session' },
+  { step: '3. Get current user', method: 'GET', endpoint: '/auth/user', description: 'Confirms the session is active' },
+  { step: '4. Resolve account IDs', method: 'GET', endpoint: '/uap/v1/me', description: 'Looks up the account (404 expected — pooled accounts aren’t onboarded)' },
+  { step: '5. Logout', method: 'POST', endpoint: '/auth/logout', description: 'Ends the session' },
+];
+
 export function handleSummary(data) {
-  return buildSummary('signin', data);
+  return buildSummary('signin', data, API_LIST);
 }
 
 export default function () {
-  const user = pickPooledUser();
+  const user = SIGNIN_SOURCE === 'CAPTURED' ? pickCapturedSignupPoolUser() : pickPooledUser();
+  if (!user.totpSecret) {
+    console.error(
+      SIGNIN_SOURCE === 'CAPTURED'
+        ? `No TOTP secret for ${user.email} — run scenarios/01-signup.js and scripts/build-signup-run-pool.js first (SIGNIN_SOURCE=CAPTURED).`
+        : `No TOTP secret for ${user.email} — seed the pool first (README's "Test user pool" section).`
+    );
+    return;
+  }
 
-  // 1. Enter email + password, submit
-  const token = signIn(user);
+  if (!signIn(user)) {
+    sleep(SLEEP_SECONDS);
+    return;
+  }
   sleep(SLEEP_SECONDS);
-  if (!token) return;
 
-  // 2. Enter mobile OTP, tap verify button
-  const res = http.post(
-    url(`/auth/2fa/verify/${TEST_2FA_CODE}`),
-    null,
-    // TODO: real SMS codes can't be scripted — confirm a fixed test/bypass OTP for staging.
-    { headers: jsonHeaders(token), tags: { name: 'Verify2FACode' } }
-  );
-  check(res, { 'verify 2fa ok': (r) => r.status === 200 });
+  if (!verifyTotp(user.totpSecret)) {
+    sleep(SLEEP_SECONDS);
+    return;
+  }
   sleep(SLEEP_SECONDS);
 
-  // 3. Navigate to portfolio screen — out of scope here.
+  getCurrentUser();
+  sleep(SLEEP_SECONDS);
+
+  resolveAccountIds(); // 404 expected — pooled accounts aren't onboarded
+  sleep(SLEEP_SECONDS);
+
+  logout();
+  sleep(SLEEP_SECONDS);
 }

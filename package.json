@@ -18,6 +18,10 @@
     "trade:load": "k6 run -e TEST_TYPE=load scenarios/04-trade-wallet.js",
     "trade:stress": "k6 run -e TEST_TYPE=stress scenarios/04-trade-wallet.js",
     "history:load": "k6 run -e TEST_TYPE=load scenarios/05-order-history.js",
-    "history:stress": "k6 run -e TEST_TYPE=stress scenarios/05-order-history.js"
+    "history:stress": "k6 run -e TEST_TYPE=stress scenarios/05-order-history.js",
+    "analyze": "node scripts/analyze-run.js",
+    "suite:independent": "bash scripts/run-independent-suite.sh",
+    "suite:dependent": "bash scripts/run-dependent-suite.sh",
+    "suite:summarize": "node scripts/summarize-suite.js"
   }
 }

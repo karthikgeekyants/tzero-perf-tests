@@ -2,4 +2,14 @@
 node_modules/
 reports/*.html
 reports/*.json
+reports/*.ndjson
+reports/*-analysis.csv
+reports/*.log
+reports/*.pdf
+reports/*.zip
+reports/dev-approval-*.txt
 !reports/.gitkeep
+# Every JSON file here is a generated pool of real account credentials
+# (email/password/TOTP secret/accountId) -- seeded pools, staging backups,
+# and run-captured pools alike. None of it belongs in version control.
+config/*.json
