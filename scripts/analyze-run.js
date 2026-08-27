@@ -136,7 +136,7 @@ async function main() {
     }
 
     if (!breakingPoint && (errorRate > errorThreshold || (p95 !== null && p95 > p95Threshold))) {
-      breakingPoint = { index, vus: avgVus, errorRate, p95 };
+      breakingPoint = { index, vus: avgVus, errorRate, p95, failureTypes: new Map(b.failureTypes) };
     }
 
     rows.push({
@@ -172,8 +172,24 @@ async function main() {
       `error rate ${(breakingPoint.errorRate * 100).toFixed(2)}% (threshold ${(errorThreshold * 100).toFixed(0)}%), ` +
       `p95 ${breakingPoint.p95}ms (threshold ${p95Threshold}ms)`
     );
+    console.log('\nFailure type breakdown at breaking point (this bucket only, not the whole run):');
+    if (breakingPoint.failureTypes.size === 0) {
+      console.log('  none — this bucket crossed on p95 latency alone, not failed requests');
+    } else {
+      for (const [label, count] of [...breakingPoint.failureTypes.entries()].sort((a, c) => c[1] - a[1])) {
+        console.log(`  ${count.toString().padStart(6)}  ${label}`);
+      }
+    }
   } else {
     console.log(`  not reached — error rate stayed under ${(errorThreshold * 100).toFixed(0)}% and p95 stayed under ${p95Threshold}ms for the whole run`);
+  }
+
+  const peakRow = rows.reduce((max, r) => (r.vus !== null && (max === null || r.vus > max.vus) ? r : max), null);
+  console.log('\nError rate at peak load:');
+  if (peakRow) {
+    console.log(`  ${peakRow['error%']}% at ~${peakRow.vus} VUs (t+${peakRow['t+sec']}s, the highest VU level this run reached)`);
+  } else {
+    console.log('  no VU samples recorded');
   }
 
   console.log('\nRecovery time:');

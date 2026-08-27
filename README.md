@@ -111,6 +111,15 @@ flags — `BASE_URL=... VUS=500 npm run suite:dependent`.
 `TEST_TYPE` selects the VU profile:
 - `load` (default) — ramps to `MAX_VUS`, holds, ramps down.
 - `stress` — ramps through and holds at 1x / 2x / 3x `MAX_VUS` to find the breaking point.
+- `staircase` — climbs through a fine-grained list of VU levels
+  (`STAIRCASE_STEPS`, default `20,40,60,80,100,150,200,300,500,750,1000`),
+  holding briefly at each one (`STAIRCASE_HOLD_DURATION`, default `30s`) so
+  `scripts/analyze-run.js`'s per-bucket breakdown lines up with real,
+  distinct VU levels instead of an interpolated ramp. Steps are
+  deliberately finer at the low end and coarser higher up — use this when
+  you need the *exact* VU count something breaks at, not just "it broke
+  somewhere in this plateau." Override the ladder entirely with
+  `-e STAIRCASE_STEPS="10,20,30,...,500"` (comma-separated, any values).
 
 **Important: don't pass `--vus`/`--iterations` on the CLI if you want the
 `load`/`stress` ramp profile above.** k6 does not merge CLI `--vus`/
@@ -308,6 +317,20 @@ It also reports:
 Works the same way for the load profile if you just want per-bucket detail
 instead of the aggregate summary — note the `load` profile only has a
 single plateau at `MAX_VUS`, not three.
+
+**For the exact VU count something breaks at, use `TEST_TYPE=staircase`
+instead of `stress`.** The 3-plateau `stress` profile tells you it broke
+somewhere between two widely-spaced levels (e.g. 500 and 1,000); `staircase`
+climbs through ~11 finer levels (20 up to 1,000 by default) so the same
+analysis pinpoints the specific step:
+
+```bash
+k6 run -e TEST_TYPE=staircase --out json=reports/raw-trade-staircase.ndjson scenarios/04-trade-wallet.js
+node scripts/analyze-run.js reports/raw-trade-staircase.ndjson --bucket=30
+```
+
+Use a `--bucket` size matching (or a bit under) `STAIRCASE_HOLD_DURATION` so
+each bucket lines up with one step instead of averaging across two.
 
 **Server-side CPU/memory is the one thing this can't cover.** k6 only sees
 the HTTP responses it gets back — it has no visibility into what's
