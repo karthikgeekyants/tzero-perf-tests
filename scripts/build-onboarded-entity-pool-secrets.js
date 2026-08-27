@@ -32,9 +32,12 @@ for (const line of lines) {
 
   const unescaped = endMatch[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
   try {
-    const { index, totpSecret } = JSON.parse(unescaped);
+    const { index, totpSecret, legalName } = JSON.parse(unescaped);
     if (index && totpSecret) {
-      secrets[index] = totpSecret;
+      // { totpSecret, legalName } object, not a bare string -- lib/users.js's
+      // pickOnboardedEntityPooledUser() reads either shape, so older pool
+      // files (bare totpSecret string, no legalName) still work unchanged.
+      secrets[index] = { totpSecret, legalName };
       count++;
     }
   } catch {

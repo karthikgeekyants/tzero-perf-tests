@@ -240,9 +240,18 @@ export default function () {
   sleep(SLEEP_SECONDS);
 
   // 11. Sign MSA (master subscription agreement) -- confirmed exact shape.
+  // Signature should match the account's actual legal name, which the
+  // onboarded pool now captures at seed time (see 00b/00c); fall back to
+  // the generic config default only for pool files seeded before that.
   res = http.post(
     url('/pi/investments/msa'),
-    JSON.stringify({ userId, assetId, userSignature: INVESTOR_LEGAL_NAME, version: INVESTMENT_MSA_VERSION, correlationId: investmentId }),
+    JSON.stringify({
+      userId,
+      assetId,
+      userSignature: user.legalName || INVESTOR_LEGAL_NAME,
+      version: INVESTMENT_MSA_VERSION,
+      correlationId: investmentId,
+    }),
     { headers: jsonHeaders(), tags: { name: 'SignMSA' } }
   );
   check(res, { 'sign msa ok': (r) => r.status === 200 });

@@ -181,5 +181,15 @@ export default function () {
   // Parsed out of the run's captured output by
   // scripts/build-onboarded-pool-secrets.js -- keep this prefix and
   // single-line JSON shape in sync with that script.
-  console.log(`ONBOARDED_POOL_SECRET:${JSON.stringify({ index: poolIndex, totpSecret: session.totpSecret })}`);
+  // legalName is captured here (not re-derived later) so downstream flows
+  // that need to match a signature against the account's real name --
+  // e.g. Invest via Wire's MSA signature -- use the actual generated name
+  // instead of a generic config default.
+  console.log(
+    `ONBOARDED_POOL_SECRET:${JSON.stringify({
+      index: poolIndex,
+      totpSecret: session.totpSecret,
+      legalName: `${personalInfo.firstName} ${personalInfo.lastName}`,
+    })}`
+  );
 }
