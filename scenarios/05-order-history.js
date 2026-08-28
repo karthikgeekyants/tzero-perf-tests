@@ -22,9 +22,14 @@ import { check, sleep } from 'k6';
 import { url, jsonHeaders } from '../lib/http.js';
 import { buildOptions, thresholdMs } from '../lib/options.js';
 import { signIn, verifyTotp, resolveAccountIds } from '../lib/auth.js';
-import { pickOnboardedPooledUser, pickOnboardedEntityPooledUser } from '../lib/users.js';
+import {
+  pickOnboardedPooledUser,
+  pickOnboardedEntityPooledUser,
+  pickCapturedOnboardedPoolUser,
+  pickCapturedOnboardedEntityPoolUser,
+} from '../lib/users.js';
 import { buildSummary } from '../lib/report.js';
-import { SLEEP_SECONDS, POOL_ACCOUNT_TYPE } from '../config/environment.js';
+import { SLEEP_SECONDS, POOL_ACCOUNT_TYPE, ONBOARDED_SOURCE } from '../config/environment.js';
 
 export const options = buildOptions({
   // Every tagged step gets a threshold -- k6 only keeps a separate per-step
@@ -59,10 +64,19 @@ export default function () {
   // MIXED: odd VUs -> Individual pool, even VUs -> Entity pool -- each VU
   // still lands on a distinct pooled account within its half.
   const useEntity = POOL_ACCOUNT_TYPE === 'MIXED' ? __VU % 2 === 0 : POOL_ACCOUNT_TYPE === 'ENTITY';
-  const user = useEntity ? pickOnboardedEntityPooledUser() : pickOnboardedPooledUser();
+  const user =
+    ONBOARDED_SOURCE === 'CAPTURED'
+      ? useEntity
+        ? pickCapturedOnboardedEntityPoolUser()
+        : pickCapturedOnboardedPoolUser()
+      : useEntity
+        ? pickOnboardedEntityPooledUser()
+        : pickOnboardedPooledUser();
   if (!user.totpSecret) {
     console.error(
-      `No TOTP secret for ${user.email} — seed the onboarded pool first (scenarios/00b-seed-onboarded-pool.js, or scenarios/00c-seed-onboarded-entity-pool.js for POOL_ACCOUNT_TYPE=ENTITY/MIXED).`
+      ONBOARDED_SOURCE === 'CAPTURED'
+        ? `No TOTP secret for ${user.email} — run scenarios/02-onboarding-individual.js / 02-onboarding-entity.js and scripts/build-onboarding-run-pool.js first (ONBOARDED_SOURCE=CAPTURED).`
+        : `No TOTP secret for ${user.email} — seed the onboarded pool first (scenarios/00b-seed-onboarded-pool.js, or scenarios/00c-seed-onboarded-entity-pool.js for POOL_ACCOUNT_TYPE=ENTITY/MIXED).`
     );
     return;
   }

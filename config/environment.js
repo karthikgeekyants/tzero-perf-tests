@@ -100,6 +100,14 @@ export const POOL_ACCOUNT_TYPE = (__ENV.POOL_ACCOUNT_TYPE || 'INDIVIDUAL').toUpp
 // created instead (see scripts/build-signup-run-pool.js).
 export const SIGNIN_SOURCE = (__ENV.SIGNIN_SOURCE || 'POOL').toUpperCase();
 
+// Same idea as SIGNIN_SOURCE above, but for Invest via Wire / Trade via
+// Wallet / Order History -- these draw from the deterministic
+// ONBOARDED_POOL_* pool (scenarios/00b-seed-onboarded-pool.js /
+// 00c-seed-onboarded-entity-pool.js) by default. Set to 'CAPTURED' to use
+// whichever real, dev-approved accounts a scenarios/02-onboarding-*.js run
+// actually created instead (see scripts/build-onboarding-run-pool.js).
+export const ONBOARDED_SOURCE = (__ENV.ONBOARDED_SOURCE || 'POOL').toUpperCase();
+
 // Onboarding (9.2) — Personal information step. dob is ISO 8601 (e.g. "1990-01-01").
 export const ONBOARDING_FIRST_NAME_PREFIX = __ENV.ONBOARDING_FIRST_NAME_PREFIX || 'Perf';
 export const ONBOARDING_LAST_NAME_PREFIX = __ENV.ONBOARDING_LAST_NAME_PREFIX || 'Test';
